@@ -3,6 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import type { FeatureCollection, LineString } from "geojson";
 import mapboxgl from "mapbox-gl";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 export type Place = {
@@ -72,6 +82,7 @@ function Map({
     null,
   );
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  const [pendingCompletePlace, setPendingCompletePlace] = useState<Place | null>(null);
 
   const mapboxToken =
     process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
@@ -250,7 +261,7 @@ function Map({
     const popupElement = popupsRef.current[0]?.getElement();
     const completeButton = popupElement?.querySelector<HTMLButtonElement>('[data-complete-place-button="true"]');
 
-    const onClickComplete = () => onCompletePlace(activePlace);
+    const onClickComplete = () => setPendingCompletePlace(activePlace);
 
     completeButton?.addEventListener('click', onClickComplete);
 
@@ -413,7 +424,7 @@ function Map({
   }, [selectedPlace, showRoute, userLocation, preferRoadRoute, mapboxToken]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative h-full w-full">
       <div
         id="map-container"
         ref={mapContainerRef}
@@ -436,6 +447,42 @@ function Map({
           </p>
         </div>
       ) : null}
+
+      <AlertDialog
+        open={Boolean(pendingCompletePlace)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingCompletePlace(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Mark
+              {" "}
+              <span className="font-medium text-foreground">
+                {pendingCompletePlace?.name}
+              </span>
+              {" "}
+              as completed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingCompletePlace) return;
+                onCompletePlace(pendingCompletePlace);
+                setPendingCompletePlace(null);
+              }}
+            >
+              Yes, complete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
