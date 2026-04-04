@@ -7,9 +7,6 @@ import {
   readStoredTrips,
   type StoredCustomTrip
 } from '@/features/trips/lib/custom-trips-storage';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -31,12 +28,31 @@ const PROMPT_DATA = `
 You are the in-app travel chatbot for this dashboard.
 
 Behavior rules:
-- Let the user ask anything they want.
+- Let the user ask anything, with special strength in trip planning.
 - Always respond in GitHub-flavored Markdown.
 - Be concise, practical, and accurate.
-- Prefer actionable suggestions and checklists.
-- If a request depends on missing details, ask a short clarifying question.
-- When users ask about creating tours, explain the exact in-app creation flow using the provided tour context.
+- Prefer actionable suggestions, checklists, and clear next steps.
+- If details are missing, ask a short clarifying question before over-assuming.
+
+Planning quality requirements:
+- When asked for a plan, provide a structured answer with:
+  1. A short recommended plan summary
+  2. Day-by-day or step-by-step breakdown
+  3. Budget guidance in ETB when budget is relevant
+  4. Optional alternatives (budget/comfort/premium)
+- Use the app context and tour context below when relevant.
+- If no saved tours exist, still provide complete planning guidance from first principles.
+- For time-sensitive planning, mention assumptions explicitly.
+
+Trip-planning defaults (when user gives little detail):
+- Assume 2-4 days for short itineraries.
+- Provide morning/afternoon/evening activity pacing.
+- Keep travel flow realistic (avoid unnecessary backtracking).
+- Suggest what to book first (transport, stay, key activities).
+
+In-app concierge flow reference:
+- Steps: Dates & Duration, Travel Party, Basecamp, Arrival & Departure, Daily Spending, Primary Goal, Culinary Boundaries, Final Notes.
+- Daily spending selector options in-app are ETB-based: <10,000 ETB, 10,000-25,000 ETB, 25,000-50,000 ETB, 50,000-100,000 ETB, 100,000+ ETB.
 `;
 
 function nowStamp(): string {
@@ -82,6 +98,7 @@ function formatTourContext(customTrips: StoredCustomTrip[]): string {
 ## App context
 - This dashboard includes a Trips section where users can create custom journeys.
 - Custom tours are stored in browser localStorage under key: ${TRIPS_STORAGE_KEY}.
+- The Assistant should help with itinerary planning, sequencing, budgeting, and refinement.
 
 ## How to create a new tour in this app
 1. Open Trips page.
@@ -97,6 +114,13 @@ function formatTourContext(customTrips: StoredCustomTrip[]): string {
 4. Add optional Final Notes.
 5. Submit to generate via Gemini through /api/trips/generate.
 6. Generated trip is saved locally and appears in the tour list.
+
+## Budget semantics used by the app
+- <10,000 ETB
+- 10,000 - 25,000 ETB
+- 25,000 - 50,000 ETB
+- 50,000 - 100,000 ETB
+- 100,000+ ETB
 
 ## Available tours snapshot
 ${toursBlock || '- No tours found'}
@@ -260,30 +284,22 @@ export default function ChatViewPage() {
 
   return (
     <div className='flex min-h-0 flex-1 px-4 py-2 md:px-6'>
-      <Card className='flex h-[calc(100dvh-5.5rem)] w-full flex-col overflow-hidden'>
-        <CardHeader className='border-b'>
-          <div className='flex items-center justify-between gap-4'>
-            <div>
-              <CardTitle className='flex items-center gap-2 text-xl'>
-                <Icons.chat className='size-5' />
-                Chatbot Assistant
-              </CardTitle>
-              <p className='text-muted-foreground mt-1 text-sm'>Ask anything.</p>
-            </div>
-            <div className='flex items-center gap-2'>
-              {/* <Badge variant='secondary'>Gemini</Badge> */}
-              <Button variant='outline' size='sm' onClick={handleClearHistory}>
-                Clear history
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+      <div className='mx-auto flex h-[calc(100dvh-5.5rem)] w-full max-w-4xl flex-col'>
+        <div className='mb-2 flex items-center justify-end'>
+          <button
+            type='button'
+            onClick={handleClearHistory}
+            className='text-muted-foreground text-xs transition hover:text-foreground'
+          >
+            Clear history
+          </button>
+        </div>
 
-        <CardContent className='min-h-0 flex-1 p-0'>
-          <ScrollArea className='h-full px-4 py-4 md:px-6'>
+        <div className='min-h-0 flex-1'>
+          <ScrollArea className='h-full py-2'>
             {emptyState ? (
               <div className='text-muted-foreground flex h-full min-h-56 items-center justify-center text-center text-sm'>
-                Start the conversation by asking the chatbot anything you want about Kuriftu.
+                Start the conversation by asking anything.
               </div>
             ) : (
               <div className='mx-auto flex w-full max-w-3xl flex-col gap-4'>
@@ -297,10 +313,10 @@ export default function ChatViewPage() {
                   >
                     <div
                       className={cn(
-                        'max-w-[85%] rounded-2xl border px-4 py-3 text-sm whitespace-pre-wrap',
+                        'max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap',
                         message.role === 'user'
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-muted border-border text-foreground'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-foreground'
                       )}
                     >
                       {message.role === 'assistant' ? (
@@ -328,35 +344,31 @@ export default function ChatViewPage() {
               </div>
             )}
           </ScrollArea>
-        </CardContent>
+        </div>
 
-        <CardFooter className='border-t p-4 md:p-6'>
-          <form
-            ref={formRef}
-            onSubmit={handleSubmit}
-            className='mx-auto flex w-full max-w-3xl flex-col gap-3'
+        <form ref={formRef} onSubmit={handleSubmit} className='mx-auto mt-3 flex w-full max-w-3xl gap-2 pb-2'>
+          <Textarea
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            placeholder='Ask anything...'
+            className='min-h-12 resize-none rounded-2xl'
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                formRef.current?.requestSubmit();
+              }
+            }}
+          />
+          <button
+            type='submit'
+            disabled={!canSubmit}
+            aria-label='Send message'
+            className='bg-primary text-primary-foreground flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40'
           >
-            <Textarea
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder='Ask anything...'
-              className='min-h-24 resize-none'
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  formRef.current?.requestSubmit();
-                }
-              }}
-            />
-            <div className='flex items-center justify-between gap-3'>
-              <p className='text-muted-foreground text-xs'>Press Enter to send. Shift + Enter for a new line.</p>
-              <Button type='submit' disabled={!canSubmit}>
-                {isLoading ? 'Sending...' : 'Send'}
-              </Button>
-            </div>
-          </form>
-        </CardFooter>
-      </Card>
+            {isLoading ? <Icons.spinner className='size-4 animate-spin' /> : <Icons.send className='size-4' />}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

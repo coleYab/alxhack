@@ -13,8 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
@@ -302,22 +301,16 @@ export function TripsDashboardClient() {
 
   return (
     <div className='mx-auto w-full max-w-6xl space-y-6'>
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-        <div>
-          <p className='text-muted-foreground text-xs uppercase tracking-[0.35em]'>Trip Lists</p>
-          <h1 className='mt-2 text-3xl font-semibold tracking-tight'>Choose or create a trip</h1>
-          <p className='text-muted-foreground mt-2 text-sm'>
-            Create your first trip with the concierge onboarding flow.
-          </p>
+      {trips.length > 0 ? (
+        <div className='flex justify-end'>
+          <Button className='gap-2' onClick={() => setIsOpen(true)}>
+            <Icons.add />
+            Create Trip
+          </Button>
         </div>
+      ) : null}
 
-        <Dialog open={isOpen} onOpenChange={openDialog}>
-          <DialogTrigger asChild>
-            <Button className='gap-2'>
-              <Icons.add />
-              Create Trip
-            </Button>
-          </DialogTrigger>
+      <Dialog open={isOpen} onOpenChange={openDialog}>
           <DialogContent className='max-h-[90dvh] overflow-y-auto sm:max-w-2xl'>
             <DialogHeader>
               <DialogTitle>Create a new trip</DialogTitle>
@@ -436,7 +429,6 @@ export function TripsDashboardClient() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
       {trips.length > 0 ? (
         <div className='grid gap-4 md:grid-cols-2'>
@@ -473,17 +465,31 @@ export function TripsDashboardClient() {
           })}
         </div>
       ) : (
-        <Card className='border-dashed'>
-          <CardHeader>
-            <CardTitle>No trips yet</CardTitle>
-            <CardDescription>
-              Create a trip to see it appear here. Your custom journeys will be saved locally.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className='text-muted-foreground text-sm'>Use Create Trip to start planning your first itinerary.</p>
-          </CardContent>
-        </Card>
+   <div className="border-none py-10">
+  <div className="text-center space-y-4">
+    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+      <Icons.mapPin className="h-6 w-6 text-muted-foreground" />
+    </div>
+
+    <div className="text-lg font-semibold">
+      No trips yet
+    </div>
+
+    <div className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+      Start planning your first journey. Your trips will appear here once created.
+    </div>
+  </div>
+
+  <div className="flex flex-col items-center gap-4 mt-6">
+    <Button
+      className="gap-2 px-6"
+      onClick={() => setIsOpen(true)}
+    >
+      <Icons.add className="h-4 w-4" />
+      Create Trip
+    </Button>
+  </div>
+</div>
       )}
 
       {trips.length > 0 ? (
