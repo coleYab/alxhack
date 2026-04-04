@@ -52,6 +52,19 @@ type GeneratedTrip = {
   itinerary: GeneratedItineraryItem[];
 };
 
+const TRIP_TAGGED_IMAGE_POOL = Array.from(
+  new Set(DEFAULT_TRIP_PLACES.map((place) => place.image).filter(Boolean))
+);
+
+function getRandomTripImage(fallback: string): string {
+  if (TRIP_TAGGED_IMAGE_POOL.length === 0) {
+    return fallback;
+  }
+
+  const randomIndex = Math.floor(Math.random() * TRIP_TAGGED_IMAGE_POOL.length);
+  return TRIP_TAGGED_IMAGE_POOL[randomIndex] || fallback;
+}
+
 function clampWords(value: string, maxWords: number): string {
   const words = value
     .trim()
@@ -205,7 +218,7 @@ Output JSON only.`;
         category: selectedEvent.category,
         lng: Number((anchor.lng + lngOffset).toFixed(6)),
         lat: Number((anchor.lat + latOffset).toFixed(6)),
-        image: anchor.image,
+        image: getRandomTripImage(anchor.image),
         day: sanitizeDay(item.day, anchor.day),
         date: futureDate,
         startTime: range.startTime,
@@ -220,7 +233,7 @@ Output JSON only.`;
       category: event.category,
       lng: Number((anchor.lng + ((index % 3) - 1) * 0.008).toFixed(6)),
       lat: Number((anchor.lat + (Math.floor(index / 3) % 3) * 0.006).toFixed(6)),
-      image: anchor.image,
+      image: getRandomTripImage(anchor.image),
       day: DEFAULT_TRIP_PLACES[index % DEFAULT_TRIP_PLACES.length].day,
       date: createFutureDate(tripCreationDate, index),
       startTime: DEFAULT_TRIP_PLACES[index % DEFAULT_TRIP_PLACES.length].startTime,
