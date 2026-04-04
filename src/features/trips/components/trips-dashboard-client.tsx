@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Icons } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
@@ -159,6 +160,7 @@ function getSingle(selections: ConciergeSelections, key: string): string {
 }
 
 export function TripsDashboardClient() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [selections, setSelections] = useState<ConciergeSelections>({});
@@ -284,6 +286,7 @@ export function TripsDashboardClient() {
 
       setIsOpen(false);
       resetFlow();
+      router.push(`/dashboard/trips/${newTrip.id}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Trip generation failed. Please try again.';
       setGenerationError(message);
