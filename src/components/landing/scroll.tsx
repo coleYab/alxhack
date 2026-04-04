@@ -29,7 +29,7 @@ const journeySteps: JourneyStep[] = [
     ],
     bestPractice: "Show why each recommendation was picked.",
     impact: "Planning feels personal, calm, and premium.",
-    image: "/images/1.jpg"
+    image: "/images/chaty.png"
   },
   {
     id: "2/5",
@@ -44,7 +44,7 @@ const journeySteps: JourneyStep[] = [
     ],
     bestPractice: "Use color tags and time-conflict alerts.",
     impact: "Guests understand their day at a glance.",
-    image: "/images/2.jpg"
+    image: "/images/maps.png"
   },
   {
     id: "3/5",
@@ -59,7 +59,7 @@ const journeySteps: JourneyStep[] = [
     ],
     bestPractice: "Add travel buffers between stops.",
     impact: "The planner supports guests throughout the day.",
-    image: "/images/3.jpg"
+    image: "/images/tripp2.png"
   },
   {
     id: "4/5",
@@ -74,7 +74,7 @@ const journeySteps: JourneyStep[] = [
     ],
     bestPractice: "Add streak bonuses for full-day completion.",
     impact: "Guests stay engaged and discover more.",
-    image: "/images/4.jpg"
+    image: "/images/rewards.png"
   },
   {
     id: "5/5",
@@ -89,7 +89,7 @@ const journeySteps: JourneyStep[] = [
     ],
     bestPractice: "Track activation, completion, and redemptions.",
     impact: "Every trip feels thoughtful and effortless.",
-    image: "/images/5.jpg"
+    image: "/images/wonder1.png"
   }
 ]
 

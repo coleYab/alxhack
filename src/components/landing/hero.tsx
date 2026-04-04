@@ -49,7 +49,7 @@ export default function HeroSection() {
             ref={menuRef}
             className={[
               'max-md:absolute max-md:top-0 max-md:left-0 max-md:h-full max-md:overflow-hidden max-md:bg-background/90 max-md:backdrop-blur max-md:transition-all max-md:duration-300',
-              'flex items-center gap-8 font-medium',
+              'flex items-center font-medium',
               'max-md:flex-col max-md:justify-center',
               menuOpen ? 'max-md:w-full' : 'max-md:w-0',
             ].join(' ')}
