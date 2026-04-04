@@ -243,7 +243,7 @@ export default function ChatViewPage() {
                 content:
                   error instanceof Error
                     ? error.message
-                    : 'Something went wrong while contacting Gemini.'
+                    : 'Something went wrong while contacting our model.'
               }
             : item
         )
@@ -268,10 +268,10 @@ export default function ChatViewPage() {
                 <Icons.chat className='size-5' />
                 Chatbot Assistant
               </CardTitle>
-              <p className='text-muted-foreground mt-1 text-sm'>Ask anything. Powered by Gemini.</p>
+              <p className='text-muted-foreground mt-1 text-sm'>Ask anything.</p>
             </div>
             <div className='flex items-center gap-2'>
-              <Badge variant='secondary'>Gemini</Badge>
+              {/* <Badge variant='secondary'>Gemini</Badge> */}
               <Button variant='outline' size='sm' onClick={handleClearHistory}>
                 Clear history
               </Button>
@@ -283,7 +283,7 @@ export default function ChatViewPage() {
           <ScrollArea className='h-full px-4 py-4 md:px-6'>
             {emptyState ? (
               <div className='text-muted-foreground flex h-full min-h-56 items-center justify-center text-center text-sm'>
-                Start the conversation by asking the chatbot anything you want.
+                Start the conversation by asking the chatbot anything you want about Kuriftu.
               </div>
             ) : (
               <div className='mx-auto flex w-full max-w-3xl flex-col gap-4'>

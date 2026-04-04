@@ -13,7 +13,7 @@ export const navGroups: NavGroup[] = [
         items: []
       },
       {
-        title: 'Chat',
+        title: 'Assistant',
         url: '/dashboard/chat',
         icon: 'chat',
         shortcut: ['c', 'c'],
