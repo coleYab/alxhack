@@ -14,47 +14,69 @@ type Reward = {
   coinCost: number;
 };
 
-const initialPoints = 185;
+const initialPoints = 0;
+const REDEEMED_COUNTS_STORAGE_KEY = 'dashboard.rewards.redeemed-counts.v1';
+
+function readRedeemedCounts(): Record<string, number> {
+  if (typeof window === 'undefined') return {};
+
+  try {
+    const raw = window.localStorage.getItem(REDEEMED_COUNTS_STORAGE_KEY);
+    if (!raw) return {};
+
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object') return {};
+
+    return Object.entries(parsed).reduce<Record<string, number>>((accumulator, [key, value]) => {
+      const count = Number(value);
+      if (Number.isFinite(count) && count >= 0) {
+        accumulator[key] = Math.floor(count);
+      }
+
+      return accumulator;
+    }, {});
+  } catch {
+    return {};
+  }
+}
+
+function saveRedeemedCounts(counts: Record<string, number>) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(REDEEMED_COUNTS_STORAGE_KEY, JSON.stringify(counts));
+}
 
 const rewards: Reward[] = [
   {
-    name: 'Free Fruit Juice',
-    image: '/images/free-goods/fruit-juice.jpg',
+    name: 'Notebook',
+    image: '/images/loyality/notebook.png',
     coinCost: 10
   },
   {
-    name: 'Free Burger',
-    image: '/images/free-goods/burgers.jpg',
-    coinCost: 35
+    name: 'Cup',
+    image: '/images/loyality/cup.png',
+    coinCost: 15
   },
   {
-    name: 'Free Swim Pack',
-    image: '/images/free-goods/pizza.jpg',
-    coinCost: 45
+    name: 'T-Shirt',
+    image: '/images/loyality/tshits.png',
+    coinCost: 20
   },
   {
-    name: 'Free Shiro Meal',
-    image: '/images/free-goods/shiro.png',
-    coinCost: 55
-  },
-  {
-    name: 'Free Steak Meal',
-    image: '/images/free-goods/steak.jpg',
-    coinCost: 70
-  },
-  {
-    name: 'Free Kitfo Meal',
-    image: '/images/free-goods/kitfo.png',
-    coinCost: 95
+    name: 'Hoodie',
+    image: '/images/loyality/hoodie.png',
+    coinCost: 25
   }
 ];
 
 export default function MyPointsClient() {
   const [points, setPoints] = useState(initialPoints);
-  const [redeemedCounts, setRedeemedCounts] = useState<Record<string, number>>({});
+  const [redeemedCounts, setRedeemedCounts] = useState<Record<string, number>>(() =>
+    readRedeemedCounts()
+  );
 
   useEffect(() => {
     setPoints(readLoyaltyPoints(initialPoints));
+    setRedeemedCounts(readRedeemedCounts());
 
     return subscribeToLoyaltyPointsChanges(() => {
       setPoints(readLoyaltyPoints(initialPoints));
@@ -78,6 +100,10 @@ export default function MyPointsClient() {
     }));
   }
 
+  useEffect(() => {
+    saveRedeemedCounts(redeemedCounts);
+  }, [redeemedCounts]);
+
   return (
     <div className='h-[calc(100dvh-52px)] overflow-y-auto'>
       <div className='mx-auto w-full max-w-6xl space-y-7 p-4 pb-10 md:px-6'>
@@ -99,9 +125,9 @@ export default function MyPointsClient() {
             return (
               <article
                 key={reward.name}
-                className='border-border/60 group flex overflow-hidden rounded-2xl bg-card/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg'
+                className='border-border/60 group flex flex-col overflow-hidden rounded-2xl bg-card/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg'
               >
-                <div className='relative h-36 w-full overflow-hidden sm:h-40'>
+                <div className='relative h-48 w-full overflow-hidden sm:h-56'>
                   <Image
                     src={reward.image}
                     alt={reward.name}
@@ -112,13 +138,13 @@ export default function MyPointsClient() {
                   <div className='absolute left-2 top-2'>
                     <div className='rounded-md border border-amber-200/60 bg-white/95 px-2 py-1 text-[10px] font-semibold text-amber-700 shadow-sm backdrop-blur'>
                       <span className='inline-flex items-center gap-1'>
-                        <Icons.pizza className='h-3 w-3' />
+                        <Icons.wallet className='h-3 w-3' />
                         {reward.coinCost}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className='flex min-h-[138px] w-full flex-col space-y-2 p-3.5'>
+                <div className='flex min-h-[138px] flex-col space-y-2 p-3.5'>
                   <p className='line-clamp-2 text-sm font-semibold leading-tight'>{reward.name}</p>
                   <p className='text-muted-foreground inline-flex items-center gap-1 text-xs'>
                     <Icons.wallet className='h-3.5 w-3.5' />

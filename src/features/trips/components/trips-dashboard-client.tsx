@@ -158,13 +158,9 @@ export function TripsDashboardClient() {
   const [currentStep, setCurrentStep] = useState(0);
   const [selections, setSelections] = useState<ConciergeSelections>({});
   const [finalNotes, setFinalNotes] = useState('');
-  const [customTrips, setCustomTrips] = useState<StoredCustomTrip[]>([]);
+  const [customTrips, setCustomTrips] = useState<StoredCustomTrip[]>(() => readStoredTrips());
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCustomTrips(readStoredTrips());
-  }, []);
 
   const isNotesStep = currentStep >= STEPS.length;
   const activeStep = isNotesStep ? null : STEPS[currentStep];
@@ -389,7 +385,6 @@ export function TripsDashboardClient() {
                                 ? 'border-primary bg-primary/10 text-primary'
                                 : 'hover:bg-accent hover:text-accent-foreground'
                             )}
-                            aria-pressed={selected}
                           >
                             <span>{option}</span>
                             {activeStep.multiple ? (
