@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Icons } from '@/components/icons';
 import { trips as seedTrips } from '@/features/trips/data';
 import {
@@ -114,6 +115,11 @@ export default function ChatViewPage() {
   const [tourContext, setTourContext] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const canSubmit = input.trim().length > 0 && !isLoading;
+  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollAnchorRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
 
   useEffect(() => {
     try {
