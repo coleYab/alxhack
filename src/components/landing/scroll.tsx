@@ -113,7 +113,7 @@ function JourneyStepCard({
   const scale = useTransform(progress, [index * 0.18, 1], [1, 0.96])
 
   return (
-    <div className='sticky top-0 flex min-h-screen items-center bg-background py-10'>
+    <div className='sticky top-0 flex min-h-screen items-center bg-background '>
       <motion.article
         style={{ scale }}
         className='mx-auto grid min-h-[720px] w-[min(80%,1700px)] overflow-hidden rounded-3xl border border-border bg-card shadow-[0_20px_80px_rgba(0,0,0,0.08)] md:grid-cols-2'
