@@ -1,7 +1,6 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Icons } from '@/components/icons';
 import { trips as seedTrips } from '@/features/trips/data';
 import {
