@@ -8,16 +8,7 @@ export default function Footer() {
                     <Image src='/icon.png' alt='Wonder AI' width={32} height={32} className='size-8 object-contain' />
                     <span className='text-lg font-semibold tracking-tight text-foreground'>Wonder AI</span>
                 </div>
-                <p className="mt-4 text-center">Copyright © 2025 <a href="https://prebuiltui.com" className="text-foreground">PrebuiltUI</a>. All rights reservered.</p>
-                <div className="flex items-center gap-4 mt-6">
-                    <a href="#" className="font-medium text-foreground transition-all hover:text-muted-foreground">
-                        Brand Guidelines
-                    </a>
-                    <div className="h-4 w-px bg-border"></div>
-                    <a href="#" className="font-medium text-foreground transition-all hover:text-muted-foreground">
-                        Trademark Policy
-                    </a>
-                </div>
+                <p className="mt-4 text-center">Copyright © 2025 All rights reservered.</p>
             </footer>
         </>
     );
