@@ -11,7 +11,6 @@ type ChatbotRequestBody = {
   history?: ChatMessage[];
   promptData?: string;
   tourContext?: string;
-  stream?: boolean;
 };
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -24,8 +23,7 @@ Behavior requirements:
 - Be helpful, concise, and accurate.
 - If the user asks travel-related questions, provide practical suggestions.
 - If information is missing, ask a short clarifying question.
-- Keep formatting simple and readable.
-- Format responses in markdown.
+- Always respond in GitHub-flavored Markdown.
 `;
 
 function toTranscript(history: ChatMessage[]): string {
@@ -63,13 +61,12 @@ export async function POST(request: Request) {
 
     const promptData = body.promptData?.trim() || DEFAULT_PROMPT_DATA;
     const tourContext = body.tourContext?.trim() || 'No tour context provided.';
-    const shouldStream = Boolean(body.stream);
 
     const prompt = `
 System prompt data:
 ${promptData}
 
-Tour context and product guidance:
+Tour context from the app:
 ${tourContext}
 
 Conversation so far:
@@ -78,54 +75,48 @@ ${toTranscript(safeHistory)}
 Latest user message:
 User: ${message}
 
-Respond as Assistant.
+Respond as Assistant in Markdown.
 `;
 
     const ai = new GoogleGenAI({ apiKey });
-
-    if (shouldStream) {
-      const stream = await ai.models.generateContentStream({
-        model: GEMINI_MODEL,
-        contents: prompt
-      });
-
-      const encoder = new TextEncoder();
-      const readableStream = new ReadableStream<Uint8Array>({
-        async start(controller) {
-          try {
-            for await (const chunk of stream) {
-              const text = chunk.text || '';
-              if (text) {
-                controller.enqueue(encoder.encode(text));
-              }
-            }
-            controller.close();
-          } catch (error) {
-            controller.error(error);
-          }
-        }
-      });
-
-      return new Response(readableStream, {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-cache, no-transform',
-          Connection: 'keep-alive'
-        }
-      });
-    }
-
-    const response = await ai.models.generateContent({
+    const response = await ai.models.generateContentStream({
       model: GEMINI_MODEL,
       contents: prompt
     });
 
-    const reply = (response.text || '').trim();
-    if (!reply) {
-      return NextResponse.json({ error: 'Gemini returned an empty response.' }, { status: 502 });
-    }
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          let hasContent = false;
 
-    return NextResponse.json({ reply });
+          for await (const chunk of response) {
+            const textChunk = chunk.text || '';
+            if (!textChunk) continue;
+
+            hasContent = true;
+            controller.enqueue(encoder.encode(textChunk));
+          }
+
+          if (!hasContent) {
+            controller.enqueue(encoder.encode('I could not generate a response right now.'));
+          }
+
+          controller.close();
+        } catch (error) {
+          console.error('Failed while streaming chatbot response:', error);
+          controller.error(error);
+        }
+      }
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive'
+      }
+    });
   } catch (error) {
     console.error('Failed to generate chatbot response:', error);
     return NextResponse.json({ error: 'Failed to chat with Gemini.' }, { status: 500 });

@@ -1,13 +1,21 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Icons } from '@/components/icons';
+import { trips as seedTrips } from '@/features/trips/data';
+import {
+  TRIPS_STORAGE_KEY,
+  readStoredTrips,
+  type StoredCustomTrip
+} from '@/features/trips/lib/custom-trips-storage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type ChatMessage = {
   id: string;
@@ -17,11 +25,19 @@ type ChatMessage = {
 };
 
 const CHATBOT_HISTORY_KEY = 'dashboard.chatbot.history.v1';
+const MAX_CONTEXT_TOURS = 12;
+const MAX_CONTEXT_PLACES_PER_TOUR = 8;
 
 const PROMPT_DATA = `
-You are the in-app chatbot for this dashboard.
-Let users ask anything they want.
-Keep replies clear, helpful, and concise.
+You are the in-app travel chatbot for this dashboard.
+
+Behavior rules:
+- Let the user ask anything they want.
+- Always respond in GitHub-flavored Markdown.
+- Be concise, practical, and accurate.
+- Prefer actionable suggestions and checklists.
+- If a request depends on missing details, ask a short clarifying question.
+- When users ask about creating tours, explain the exact in-app creation flow using the provided tour context.
 `;
 
 function nowStamp(): string {
@@ -31,10 +47,72 @@ function nowStamp(): string {
   });
 }
 
+function formatTourContext(customTrips: StoredCustomTrip[]): string {
+  const allTours = [...customTrips.map((item) => item.trip), ...seedTrips].slice(0, MAX_CONTEXT_TOURS);
+
+  const toursBlock = allTours
+    .map((tour, index) => {
+      const places = tour.places
+        .slice(0, MAX_CONTEXT_PLACES_PER_TOUR)
+        .map((place) => {
+          const date = place.date || 'N/A';
+          const day = place.day || 'N/A';
+          const start = place.startTime || 'N/A';
+          const end = place.endTime || 'N/A';
+          const category = place.category || 'General';
+          const city = place.city || tour.city;
+          return `  - ${place.name} (${category}, ${city}) on ${day} ${date} from ${start} to ${end}`;
+        })
+        .join('\n');
+
+      return `${index + 1}. ${tour.name}\n- id: ${tour.id}\n- summary: ${tour.summary}\n- city: ${tour.city}\n- theme: ${tour.theme}\n- period: ${tour.period}\n- places:\n${places || '  - No places listed'}`;
+    })
+    .join('\n\n');
+
+  const customMetadata = customTrips
+    .slice(0, MAX_CONTEXT_TOURS)
+    .map((item, index) => {
+      const answers = Object.entries(item.answers)
+        .map(([step, values]) => `  - ${step}: ${values.join(', ')}`)
+        .join('\n');
+      return `${index + 1}. ${item.trip.name}\n- createdAt: ${item.createdAt}\n- notes: ${item.notes || 'None'}\n- answers:\n${answers || '  - No answers stored'}`;
+    })
+    .join('\n\n');
+
+  return `
+## App context
+- This dashboard includes a Tours section where users can choose existing tours or create custom ones.
+- Custom tours are stored in browser localStorage under key: ${TRIPS_STORAGE_KEY}.
+
+## How to create a new tour in this app
+1. Open Trips page.
+2. Click Create Trip.
+3. Complete concierge steps:
+   - Dates & Duration
+   - The Travel Party
+   - The Basecamp
+   - Arrival & Departure
+   - Daily Spending
+   - The Primary Goal
+   - Culinary Boundaries
+4. Add optional Final Notes.
+5. Submit to generate via Gemini through /api/trips/generate.
+6. Generated trip is saved locally and appears in the tour list.
+
+## Available tours snapshot
+${toursBlock || '- No tours found'}
+
+## Custom tour metadata
+${customMetadata || '- No custom tours found'}
+`.trim();
+}
+
 export default function ChatViewPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [tourContext, setTourContext] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
   const canSubmit = input.trim().length > 0 && !isLoading;
 
   useEffect(() => {
@@ -56,6 +134,11 @@ export default function ChatViewPage() {
   }, []);
 
   useEffect(() => {
+    const customTrips = readStoredTrips();
+    setTourContext(formatTourContext(customTrips));
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem(CHATBOT_HISTORY_KEY, JSON.stringify(messages));
   }, [messages]);
 
@@ -74,11 +157,22 @@ export default function ChatViewPage() {
     };
 
     const nextMessages = [...messages, userMessage];
-    setMessages(nextMessages);
+    const assistantId = `assistant-${Date.now()}`;
+    setMessages([
+      ...nextMessages,
+      {
+        id: assistantId,
+        role: 'assistant',
+        content: '',
+        createdAt: nowStamp()
+      }
+    ]);
     setInput('');
     setIsLoading(true);
 
     try {
+      const contextForRequest = tourContext || formatTourContext(readStoredTrips());
+
       const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: {
@@ -87,32 +181,69 @@ export default function ChatViewPage() {
         body: JSON.stringify({
           message: text,
           history: nextMessages.map((item) => ({ role: item.role, content: item.content })),
-          promptData: PROMPT_DATA
+          promptData: PROMPT_DATA,
+          tourContext: contextForRequest
         })
       });
 
-      const payload = (await response.json()) as { reply?: string; error?: string };
-      if (!response.ok || !payload.reply) {
+      if (!response.ok) {
+        const payload = (await response.json()) as { error?: string };
         throw new Error(payload.error || 'Unable to get a response right now.');
       }
 
-      const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: payload.reply,
-        createdAt: nowStamp()
-      };
+      if (!response.body) {
+        throw new Error('Streaming response was not available.');
+      }
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullReply = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        fullReply += decoder.decode(value, { stream: true });
+        setMessages((prev) =>
+          prev.map((item) =>
+            item.id === assistantId
+              ? {
+                  ...item,
+                  content: fullReply
+                }
+              : item
+          )
+        );
+      }
+
+      fullReply += decoder.decode();
+
+      if (!fullReply.trim()) {
+        setMessages((prev) =>
+          prev.map((item) =>
+            item.id === assistantId
+              ? {
+                  ...item,
+                  content: 'I could not generate a response right now.'
+                }
+              : item
+          )
+        );
+      }
     } catch (error) {
-      const assistantMessage: ChatMessage = {
-        id: `assistant-error-${Date.now()}`,
-        role: 'assistant',
-        content:
-          error instanceof Error ? error.message : 'Something went wrong while contacting Gemini.',
-        createdAt: nowStamp()
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === assistantId
+            ? {
+                ...item,
+                content:
+                  error instanceof Error
+                    ? error.message
+                    : 'Something went wrong while contacting Gemini.'
+              }
+            : item
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -168,7 +299,15 @@ export default function ChatViewPage() {
                           : 'bg-muted border-border text-foreground'
                       )}
                     >
-                      <p>{message.content}</p>
+                      {message.role === 'assistant' ? (
+                        <div className='prose prose-sm max-w-none break-words dark:prose-invert'>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.content || '...'}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className='whitespace-pre-wrap'>{message.content}</p>
+                      )}
                       <p
                         className={cn(
                           'mt-2 text-[11px]',
@@ -182,21 +321,17 @@ export default function ChatViewPage() {
                     </div>
                   </div>
                 ))}
-
-                {isLoading && (
-                  <div className='flex justify-start'>
-                    <div className='bg-muted text-muted-foreground border-border rounded-2xl border px-4 py-3 text-sm'>
-                      Gemini is thinking...
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </ScrollArea>
         </CardContent>
 
         <CardFooter className='border-t p-4 md:p-6'>
-          <form onSubmit={handleSubmit} className='mx-auto flex w-full max-w-3xl flex-col gap-3'>
+          <form
+            ref={formRef}
+            onSubmit={handleSubmit}
+            className='mx-auto flex w-full max-w-3xl flex-col gap-3'
+          >
             <Textarea
               value={input}
               onChange={(event) => setInput(event.target.value)}
@@ -205,7 +340,7 @@ export default function ChatViewPage() {
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault();
-                  void handleSubmit(event as unknown as FormEvent<HTMLFormElement>);
+                  formRef.current?.requestSubmit();
                 }
               }}
             />
