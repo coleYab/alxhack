@@ -19,7 +19,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { trips as seedTrips, type TripListItem } from '@/features/trips/data';
+import { type TripListItem } from '@/features/trips/data';
 import { DEFAULT_TRIP_PLACES } from '@/features/trips/constants/default-places';
 import {
   readStoredTrips,
@@ -170,7 +170,7 @@ export function TripsDashboardClient() {
 
   const trips = useMemo(() => {
     const localTrips = customTrips.map((item) => item.trip);
-    return [...localTrips, ...seedTrips];
+    return localTrips;
   }, [customTrips]);
 
   const resetFlow = () => {
@@ -301,7 +301,7 @@ export function TripsDashboardClient() {
           <p className='text-muted-foreground text-xs uppercase tracking-[0.35em]'>Trip Lists</p>
           <h1 className='mt-2 text-3xl font-semibold tracking-tight'>Choose or create a trip</h1>
           <p className='text-muted-foreground mt-2 text-sm'>
-            Start from an existing mock itinerary or build a custom trip using concierge onboarding.
+            Create your first trip with the concierge onboarding flow.
           </p>
         </div>
 
@@ -432,42 +432,56 @@ export function TripsDashboardClient() {
         </Dialog>
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2'>
-        {trips.map((trip) => {
-          const isCustom = trip.id.startsWith('custom-');
+      {trips.length > 0 ? (
+        <div className='grid gap-4 md:grid-cols-2'>
+          {trips.map((trip) => {
+            const isCustom = trip.id.startsWith('custom-');
 
-          return (
-            <Link key={trip.id} href={`/dashboard/trips/${trip.id}`}>
-              <Card className='hover:border-primary/40 hover:bg-accent/30 h-full transition'>
-                <CardHeader>
-                  <div className='flex items-center justify-between gap-3'>
-                    <div>
-                      <CardTitle className='text-xl'>{trip.name}</CardTitle>
-                      <CardDescription className='mt-1'>{trip.summary}</CardDescription>
+            return (
+              <Link key={trip.id} href={`/dashboard/trips/${trip.id}`}>
+                <Card className='h-full transition hover:border-primary/40 hover:bg-accent/30'>
+                  <CardHeader>
+                    <div className='flex items-center justify-between gap-3'>
+                      <div>
+                        <CardTitle className='text-xl'>{trip.name}</CardTitle>
+                        <CardDescription className='mt-1'>{trip.summary}</CardDescription>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        {isCustom ? <Badge>Custom</Badge> : null}
+                        <Badge variant='outline'>{trip.places.length} stops</Badge>
+                      </div>
                     </div>
-                    <div className='flex items-center gap-2'>
-                      {isCustom ? <Badge>Custom</Badge> : null}
-                      <Badge variant='outline'>{trip.places.length} stops</Badge>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <div className='flex flex-wrap gap-2'>
+                      <Badge>{trip.city}</Badge>
+                      <Badge variant='secondary'>{trip.theme}</Badge>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  <div className='flex flex-wrap gap-2'>
-                    <Badge>{trip.city}</Badge>
-                    <Badge variant='secondary'>{trip.theme}</Badge>
-                  </div>
-                  <div className='flex items-center justify-between text-sm text-muted-foreground'>
-                    <span>{trip.period}</span>
-                    <span className='inline-flex items-center gap-1'>
-                      Open map <Icons.arrowRight className='h-4 w-4' />
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
+                    <div className='flex items-center justify-between text-sm text-muted-foreground'>
+                      <span>{trip.period}</span>
+                      <span className='inline-flex items-center gap-1'>
+                        Open map <Icons.arrowRight className='h-4 w-4' />
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <Card className='border-dashed'>
+          <CardHeader>
+            <CardTitle>No trips yet</CardTitle>
+            <CardDescription>
+              Create a trip to see it appear here. Your custom journeys will be saved locally.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className='text-muted-foreground text-sm'>Use Create Trip to start planning your first itinerary.</p>
+          </CardContent>
+        </Card>
+      )}
 
       {trips.length > 0 ? (
         <div className='flex justify-center'>

@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Icons } from '@/components/icons';
-import { trips as seedTrips } from '@/features/trips/data';
 import {
   TRIPS_STORAGE_KEY,
   readStoredTrips,
@@ -48,7 +47,7 @@ function nowStamp(): string {
 }
 
 function formatTourContext(customTrips: StoredCustomTrip[]): string {
-  const allTours = [...customTrips.map((item) => item.trip), ...seedTrips].slice(0, MAX_CONTEXT_TOURS);
+  const allTours = customTrips.map((item) => item.trip).slice(0, MAX_CONTEXT_TOURS);
 
   const toursBlock = allTours
     .map((tour, index) => {
@@ -81,7 +80,7 @@ function formatTourContext(customTrips: StoredCustomTrip[]): string {
 
   return `
 ## App context
-- This dashboard includes a Tours section where users can choose existing tours or create custom ones.
+- This dashboard includes a Trips section where users can create custom journeys.
 - Custom tours are stored in browser localStorage under key: ${TRIPS_STORAGE_KEY}.
 
 ## How to create a new tour in this app
