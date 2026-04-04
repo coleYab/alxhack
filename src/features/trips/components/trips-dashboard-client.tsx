@@ -74,9 +74,15 @@ const STEPS: ConciergeStep[] = [
   {
     id: 'finances_budget',
     title: 'Daily Spending',
-    subtitle: 'Excluding accommodation, what is your comfortable daily limit?',
+    subtitle: 'Excluding accommodation, what ETB range fits your daily spending?',
     icon: 'wallet',
-    options: ['Modest ($)', 'Standard ($$)', 'Premium ($$$)', 'No Limit ($$$$)'],
+    options: [
+      '<10,000 ETB',
+      '10,000 - 25,000 ETB',
+      '25,000 - 50,000 ETB',
+      '50,000 - 100,000 ETB',
+      '100,000+ ETB'
+    ],
     multiple: false
   },
   {
@@ -435,8 +441,6 @@ export function TripsDashboardClient() {
       {trips.length > 0 ? (
         <div className='grid gap-4 md:grid-cols-2'>
           {trips.map((trip) => {
-            const isCustom = trip.id.startsWith('custom-');
-
             return (
               <Link key={trip.id} href={`/dashboard/trips/${trip.id}`}>
                 <Card className='h-full transition hover:border-primary/40 hover:bg-accent/30'>
@@ -447,7 +451,6 @@ export function TripsDashboardClient() {
                         <CardDescription className='mt-1'>{trip.summary}</CardDescription>
                       </div>
                       <div className='flex items-center gap-2'>
-                        {isCustom ? <Badge>Custom</Badge> : null}
                         <Badge variant='outline'>{trip.places.length} stops</Badge>
                       </div>
                     </div>

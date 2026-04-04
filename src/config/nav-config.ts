@@ -21,14 +21,14 @@ export const navGroups: NavGroup[] = [
         items: []
       },
 
-            {
-        title: 'Dashboard',
-        url: '/dashboard/overview',
-        icon: 'dashboard',
-        isActive: false,
-        shortcut: ['d', 'd'],
-        items: []
-      },
+      //       {
+      //   title: 'Dashboard',
+      //   url: '/dashboard/overview',
+      //   icon: 'dashboard',
+      //   isActive: false,
+      //   shortcut: ['d', 'd'],
+      //   items: []
+      // },
  
       {
         title: 'Rewards',

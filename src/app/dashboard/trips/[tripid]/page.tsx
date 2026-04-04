@@ -581,8 +581,15 @@ export default function Home() {
         </div>
 
         {editingPlace ? (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/20 px-4 py-6 backdrop-blur-[2px]">
-            <div className="w-full max-w-3xl overflow-hidden rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+          <div
+            className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-900/20 px-4 py-4 backdrop-blur-[2px]"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                setEditingPlace(null);
+              }
+            }}
+          >
+            <div className="my-2 w-full max-w-3xl overflow-y-auto rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:my-6 sm:max-h-[calc(100dvh-3rem)]">
               <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
