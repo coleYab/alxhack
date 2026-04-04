@@ -54,23 +54,6 @@ export default function HeroSection() {
               menuOpen ? 'max-md:w-full' : 'max-md:w-0',
             ].join(' ')}
           >
-            <a href="#" className="hover:text-muted-foreground">Discovery</a>
-
-            <div className="relative group flex items-center gap-1 cursor-pointer">
-              <span>Features</span>
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <path d="m4.5 7.2 3.793 3.793a1 1 0 0 0 1.414 0L13.5 7.2" stroke="#050040" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div className="absolute top-36 left-0 flex w-max -translate-y-full flex-col gap-2 rounded-lg border border-border bg-card p-4 font-normal opacity-0 shadow-sm transition-all duration-300 group-hover:top-44 group-hover:opacity-100">
-                <a href="#" className="transition-all hover:translate-x-1 hover:text-muted-foreground">Interactive Discovery</a>
-                <a href="#" className="transition-all hover:translate-x-1 hover:text-muted-foreground">Visual Roadmap</a>
-                <a href="#" className="transition-all hover:translate-x-1 hover:text-muted-foreground">Live Interaction</a>
-                <a href="#" className="transition-all hover:translate-x-1 hover:text-muted-foreground">Smart Sync</a>
-              </div>
-            </div>
-
-            <a href="#" className="hover:text-muted-foreground">Roadmap</a>
-            <a href="#" className="hover:text-muted-foreground">Rewards</a>
 
             <button
               onClick={() => setMenuOpen(false)}
@@ -106,7 +89,7 @@ export default function HeroSection() {
         </nav>
 
         <div className="mx-auto mt-40 flex w-max items-center gap-2 rounded-full border border-border bg-card/80 px-4 py-2 hover:border-muted-foreground/40 md:mt-32">
-          <span>🌍 The AI Journey Planner is here</span>
+          <span> The AI Journey Planner is here</span>
           {/* <button className="flex items-center gap-1 font-medium">
             <span>Read more</span>
             <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
